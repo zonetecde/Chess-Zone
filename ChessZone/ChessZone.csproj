@@ -8,6 +8,38 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="assets\pieces\bb.png" />
+    <None Remove="assets\pieces\bk.png" />
+    <None Remove="assets\pieces\bn.png" />
+    <None Remove="assets\pieces\bp.png" />
+    <None Remove="assets\pieces\bq.png" />
+    <None Remove="assets\pieces\br.png" />
+    <None Remove="assets\pieces\moving_proposition.png" />
+    <None Remove="assets\pieces\wb.png" />
+    <None Remove="assets\pieces\wk.png" />
+    <None Remove="assets\pieces\wn.png" />
+    <None Remove="assets\pieces\wp.png" />
+    <None Remove="assets\pieces\wq.png" />
+    <None Remove="assets\pieces\wr.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="assets\pieces\bb.png" />
+    <EmbeddedResource Include="assets\pieces\bk.png" />
+    <EmbeddedResource Include="assets\pieces\bn.png" />
+    <EmbeddedResource Include="assets\pieces\bp.png" />
+    <EmbeddedResource Include="assets\pieces\bq.png" />
+    <EmbeddedResource Include="assets\pieces\br.png" />
+    <EmbeddedResource Include="assets\pieces\moving_proposition.png" />
+    <EmbeddedResource Include="assets\pieces\wb.png" />
+    <EmbeddedResource Include="assets\pieces\wk.png" />
+    <EmbeddedResource Include="assets\pieces\wn.png" />
+    <EmbeddedResource Include="assets\pieces\wp.png" />
+    <EmbeddedResource Include="assets\pieces\wq.png" />
+    <EmbeddedResource Include="assets\pieces\wr.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.1.0-preview1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
@@ -19,10 +51,6 @@
     <Reference Include="zck_client">
       <HintPath>..\..\zoneck server\zck_client\bin\Debug\zck_client.dll</HintPath>
     </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="assets\pieces\" />
   </ItemGroup>
 
 </Project>

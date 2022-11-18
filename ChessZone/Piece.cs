@@ -14,6 +14,7 @@ namespace ChessZone
         ROOK,
         BISHOP,
         KNIGHT,
-        PAWN
+        PAWN,
+        MOVING_PROPOSITION
     }
 }

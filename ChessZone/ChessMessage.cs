@@ -8,7 +8,7 @@ namespace ChessZone
 {
     public class ChessMessage
     {
-        public ChessMessage(CHESS_MESSAGE_TYPE messageType, string senderId, string message)
+        public ChessMessage(CHESS_MESSAGE_TYPE messageType, string senderId, object message)
         {
             MessageType = messageType;
             SenderId = senderId;
@@ -17,10 +17,11 @@ namespace ChessZone
 
         public CHESS_MESSAGE_TYPE MessageType { get; set; }
         public string SenderId { get; set; }
-        public string Message { get; set; }
+        public object Message { get; set; }
     }
 
     public enum CHESS_MESSAGE_TYPE
     {
+        MOVEMENT
     }
 }
