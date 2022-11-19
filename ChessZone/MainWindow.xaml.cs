@@ -657,7 +657,8 @@ namespace ChessZone
             }
             catch
             {
-                MessageBox.Show("Aucun serveur trouvé.");
+                MessageBox.Show("Aucun serveur trouvé.\nVeuillez le télécharger sur mon GitHub : \ngithub.com/zonetecde/zoneck-server/releases");
+                this.Close();
             }
 
             // Essaie de trouver un joueur

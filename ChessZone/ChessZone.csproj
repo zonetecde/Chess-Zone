@@ -5,6 +5,7 @@
     <TargetFramework>net6.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>chessZone_icon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,6 +22,11 @@
     <None Remove="assets\pieces\wp.png" />
     <None Remove="assets\pieces\wq.png" />
     <None Remove="assets\pieces\wr.png" />
+    <None Remove="chessZone_icon.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="chessZone_icon.ico" />
   </ItemGroup>
 
   <ItemGroup>
@@ -51,6 +57,10 @@
     <Reference Include="zck_client">
       <HintPath>..\..\zoneck server\zck_client\bin\Debug\zck_client.dll</HintPath>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="chessZone_icon.png" />
   </ItemGroup>
 
 </Project>
