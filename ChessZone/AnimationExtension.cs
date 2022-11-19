@@ -12,13 +12,13 @@ namespace ChessZone
 {
     public class AnimationExtension : ObservableObject
     {
-        private string searchForPlayerAnimatedText = "Recherche d'un joueur...";
+        private string searchForPlayerAnimatedText = "Connexion au serveur.  ";
 
         public string SearchForPlayerAnimatedText 
         {
             get => searchForPlayerAnimatedText;
             set => SetProperty(ref searchForPlayerAnimatedText, value);
-        } 
+        }
 
         private DispatcherTimer T_Animation { get; set; }
 
@@ -33,6 +33,7 @@ namespace ChessZone
             int tickCount = 2;
             T_Animation.Tick += (sender, e) =>
             {
+                
                 // Animation SearchForPlayerAnimatedText :
                 //      Les 3 petits points à la fin apparaissent et disparaissent. 
                 //      Affiché dans Label_SearchPlayer.Content dans MainWindow
@@ -41,15 +42,16 @@ namespace ChessZone
                 {
                     case 3:
                         tickCount = 0;
-                        SearchForPlayerAnimatedText = "Recherche d'un joueur.  ";
+                        SearchForPlayerAnimatedText = SearchForPlayerAnimatedText.Remove(SearchForPlayerAnimatedText.IndexOf('.'), 3) + ".  ";
                         break;
                     case 2:
-                        SearchForPlayerAnimatedText = "Recherche d'un joueur...";
+                        SearchForPlayerAnimatedText = SearchForPlayerAnimatedText.Remove(SearchForPlayerAnimatedText.IndexOf('.'), 3) + "...";
                         break;
                     case 1:
-                        SearchForPlayerAnimatedText = "Recherche d'un joueur.. ";
+                        SearchForPlayerAnimatedText = SearchForPlayerAnimatedText.Remove(SearchForPlayerAnimatedText.IndexOf('.'), 3) + ".. ";
                         break;
                 }
+                
             };
 
             T_Animation.Start();

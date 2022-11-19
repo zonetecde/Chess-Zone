@@ -19,6 +19,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using ClassLibrary;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using zck_client;
 using static ClassLibrary.ClassLibrary;
 
@@ -31,6 +32,7 @@ namespace ChessZone
     {
         // Couleur
         private readonly Brush EveryOtherBoxColor;
+        private char PlayerColor = 'w';
 
         // GameBoard
         private const int GAME_BOARD_SIZE = 8; // Taille du gameBoard
@@ -45,13 +47,14 @@ namespace ChessZone
         // Déroulement
         private bool IsSearchingPlayer;         // Est-ce que l'on est actuellement en train de rechercher un adversaire ?
         private bool IsMyTurn = false;          // Est-ce que c'est à mon tour de jouer ?
+        private bool IsMyKingBeingThreaten = false;
 
         public MainWindow()
         {
             InitializeComponent();
 
             // Extension
-            PanelExtension.IdenticalSize(this, Border_GameBoard); // Gère la taille du gameBoard pour qu'elle s'adapte à celle de la fenêtre
+            PanelExtension.IdenticalSize(this, Border_GameBoard, 40); // Gère la taille du gameBoard pour qu'elle s'adapte à celle de la fenêtre
 
             // Couleur
             BrushConverter brushConverter = new BrushConverter();                       // Permet de convertir un code couleur Hex en Media.Brush
@@ -59,20 +62,6 @@ namespace ChessZone
 
             // GameBoard
             GameBoardInit(out GameBoard);
-        }
-
-        /// <summary>
-        /// Affiche le gameBoard dans la uniformGrid_gameBoard
-        /// </summary>
-        private void ShowGameBoard()
-        {
-            for (int x = 0; x < GAME_BOARD_SIZE; x++)
-            {
-                for (int y = 0; y < GAME_BOARD_SIZE; y++)
-                {
-                    
-                }
-            }
         }
 
         /// <summary>
@@ -122,7 +111,6 @@ namespace ChessZone
         /// </summary>
         /// <param name="sender">Cellule cliqué</param>
         /// <param name="e"></param>
-        /// <exception cref="NotImplementedException"></exception>
         private void GameCellMouseDown(object sender, MouseButtonEventArgs e)
         {
             Border clicked_cell = sender is Image ? (Border)VisualTreeHelper.GetParent(sender as UIElement) : (Border)sender;
@@ -134,81 +122,6 @@ namespace ChessZone
                 // En fonction de la case cliqué 
                 switch (clicked_gameCell.Piece)
                 {
-                    case Piece.PAWN:
-                        // La pièce PAWN peut avancer de 2 vers l'avant si son y = 6
-                        // Si la pièce PAWN est sur y < 6 alors elle ne peut avancer que d'un rang
-                        var possible_movement_pos_pawn = new List<int[]>();
-                        possible_movement_pos_pawn.Add(new int[2] { clicked_gameCell.X, clicked_gameCell.Y - 1 });
-
-                        if (clicked_gameCell.Y - 1 >= 0)
-                        {
-                            if (((GameCell)GameBoard[clicked_gameCell.X, clicked_gameCell.Y - 1].Tag).IsMyPiece == null // Il n'y a pas de pièce devant donc on peu passer la deuxième case au dessus
-                                && clicked_gameCell.Y == 6) // On est en première ligne
-                                possible_movement_pos_pawn.Add(new int[2] { clicked_gameCell.X, clicked_gameCell.Y - 2 });
-                        }
-
-                        ShowPieceMovePreview(clicked_gameCell, possible_movement_pos_pawn);
-                        
-                        break;
-                    case Piece.KNIGHT:
-                        // La pièce KNIGHT peut avancer de 2-1 toutes directions confondu
-                        ShowPieceMovePreview(clicked_gameCell, new List<int[]>
-                        { 
-                            new int[2]{ clicked_gameCell.X + 1, clicked_gameCell.Y + 2 },
-                            new int[2]{ clicked_gameCell.X - 1, clicked_gameCell.Y + 2 },
-                            new int[2]{ clicked_gameCell.X - 1, clicked_gameCell.Y - 2 },
-                            new int[2]{ clicked_gameCell.X + 1, clicked_gameCell.Y - 2 },
-                            new int[2]{ clicked_gameCell.X + 2, clicked_gameCell.Y - 1 },
-                            new int[2]{ clicked_gameCell.X + 2, clicked_gameCell.Y + 1 },
-                            new int[2]{ clicked_gameCell.X - 2, clicked_gameCell.Y + 1 },
-                            new int[2]{ clicked_gameCell.X - 2, clicked_gameCell.Y - 1 },
-                        });                       
-                        break;
-                    case Piece.ROOK:
-                        // La pièce ROOK peut aller dans toutes les directions verticales et horizontales
-                        var possible_movement_pos_rook = new List<int[]>();
-
-                        AddHorizontalAndVerticalMovement(clicked_gameCell, possible_movement_pos_rook);
-
-                        ShowPieceMovePreview(clicked_gameCell, possible_movement_pos_rook);
-                        break;
-
-                    case Piece.BISHOP:
-                        // La pièce BISHOP peut aller dans toutes les directions diagonales
-                        var possible_movement_pos_bishop = new List<int[]>();
-
-                        AddDiagonalMovement(clicked_gameCell, possible_movement_pos_bishop);
-
-                        ShowPieceMovePreview(clicked_gameCell, possible_movement_pos_bishop);
-                        break;
-
-                    case Piece.QUEEN:
-                        // La pièce QUEEN peut aller dans toutes les directions diagonales, verticales et horizontales.
-                        var possible_movement_pos_queen = new List<int[]>();
-
-                        AddDiagonalMovement(clicked_gameCell, possible_movement_pos_queen);
-                        AddHorizontalAndVerticalMovement(clicked_gameCell, possible_movement_pos_queen);
-
-                        ShowPieceMovePreview(clicked_gameCell, possible_movement_pos_queen);
-                        break;
-
-                    case Piece.KING:
-                        // La pièce KING peut aller dans toutes ses cases le juxtaposant. 
-
-                        ShowPieceMovePreview(clicked_gameCell, new List<int[]>()
-                        {
-                            new int[2]{ clicked_gameCell.X - 1, clicked_gameCell.Y - 1 },
-                            new int[2]{ clicked_gameCell.X + 1, clicked_gameCell.Y + 1 },
-                            new int[2]{ clicked_gameCell.X - 1, clicked_gameCell.Y + 1 },
-                            new int[2]{ clicked_gameCell.X + 1, clicked_gameCell.Y - 1 },
-                            new int[2]{ clicked_gameCell.X, clicked_gameCell.Y - 1 },
-                            new int[2]{ clicked_gameCell.X, clicked_gameCell.Y + 1 },
-                            new int[2]{ clicked_gameCell.X + 1, clicked_gameCell.Y },
-                            new int[2]{ clicked_gameCell.X - 1, clicked_gameCell.Y },
-                        });
-
-                        break;
-
                     case Piece.MOVING_PROPOSITION:
                         // Change à qui est le tour
                         IsMyTurn = false;
@@ -226,12 +139,27 @@ namespace ChessZone
                         ZoneckClient.Send(message, IdAdversaire);
 
                         // Bouge la pièce. On le fait seulement maintenant pour conserver les variables lors de l'envoi des infos à l'adversaire
-                        MovePiece(new int[2] { clicked_gameCell.ToMoveX, clicked_gameCell.ToMoveY }, new int[2] { clicked_gameCell.X, clicked_gameCell.Y });
+                        MovePiece(new int[2] { clicked_gameCell.ToMoveX, clicked_gameCell.ToMoveY }, new int[2] { clicked_gameCell.X, clicked_gameCell.Y }, false);
 
                         // Cache les preview
                         HideAllMovingProposition(null);
 
+                        // Si un king était menacé il ne l'est plus car on l'a bougé
+                        IsMyKingBeingThreaten = false;
+
                         break;
+
+                    // Si une pièce a été cliqué
+                    case Piece.KNIGHT:
+                    case Piece.PAWN:
+                    case Piece.KING:
+                    case Piece.QUEEN:
+                    case Piece.BISHOP:
+                    case Piece.ROOK:
+                        ShowPieceMovePreview(clicked_gameCell, GetPieceMovement(clicked_gameCell.Piece, clicked_gameCell));
+
+                        break;
+
                 }
 
                 // Permet de ne pas déclencher une deuxième fois l'event
@@ -240,19 +168,180 @@ namespace ChessZone
         }
 
         /// <summary>
-        /// Ajoute tous les mouvements horizontaux et verticaux que la pièce peut effectuer par rapport à gameCell
+        /// Retourne les mouvements possible de la pièce
+        /// </summary>
+        /// <param name="piece"></param>
+        /// <param name="gameCell"></param>
+        /// <returns></returns>
+        private List<int[]> GetPieceMovement(Piece piece, GameCell gameCell)
+        {
+            // En fonction de la pièce 
+            switch (piece)
+            {
+                case Piece.PAWN:
+                    return GetPawnPossibleMovement(gameCell);
+
+                case Piece.KNIGHT:
+                    return GetKnightPossibleMovement(gameCell);
+
+                case Piece.ROOK:
+                    return GetRookPossibleMovement(gameCell);
+
+                case Piece.BISHOP:
+                    return GetBishopPossibleMovement(gameCell);
+
+                case Piece.QUEEN:
+                    var possible_movement_pos_queen = new List<int[]>();
+
+                    possible_movement_pos_queen.AddRange(GetBishopPossibleMovement(gameCell));
+                    possible_movement_pos_queen.AddRange(GetRookPossibleMovement(gameCell));
+
+                    return possible_movement_pos_queen;
+
+                case Piece.KING:
+                    return GetKingPossibleMovement(gameCell);
+
+                default:
+                    return new List<int[]>();
+            }
+        }
+
+        /// <summary>
+        /// Donne tous les mouvements de manière à ceux que si la case se trouve en Y == 6 elle peut avancer de 2 (si aucun obstacle)
+        /// et que elle se trouve dans Y < 6 elle ne peut que avancer que d'un
         /// </summary>
         /// <param name="gameCell"></param>
-        /// <param name="possible_movement_pos_rook"></param>
-        private void AddHorizontalAndVerticalMovement(GameCell gameCell, List<int[]> possible_movement_pos_rook)
+        /// <returns></returns>
+        private List<int[]> GetPawnPossibleMovement(GameCell gameCell)
         {
+            // La pièce PAWN peut avancer de 2 vers l'avant si son y = 6
+            // Si la pièce PAWN est sur y < 6 alors elle ne peut avancer que d'un rang
+            var possible_movement_pos_pawn = new List<int[]>();
+            possible_movement_pos_pawn.Add(new int[2] { gameCell.X, gameCell.Y - 1 });
+
+            if (gameCell.Y - 1 >= 0)
+            {
+                if (((GameCell)GameBoard[gameCell.X, gameCell.Y - 1].Tag).IsMyPiece == null // Il n'y a pas de pièce devant donc on peu passer la deuxième case au dessus
+                    && gameCell.Y == 6) // On est en première ligne
+                    possible_movement_pos_pawn.Add(new int[2] { gameCell.X, gameCell.Y - 2 });
+            }
+
+            // La pièce PAWN est spécial :
+            // Si l'on a un ennemi en y -1 x1-(-1) alors on peut le tuer, sinon on ne peut pas y aller
+            // Par contre elle ne peut tuer l'ennemi se trouvant devant
+            if (gameCell.Piece == Piece.PAWN)
+            {
+                if (gameCell.X - 1 >= 0 && gameCell.Y - 1 >= 0) // Index out of range prevention
+                    if (((GameCell)GameBoard[gameCell.X - 1, gameCell.Y - 1].Tag).IsMyPiece == false)
+                        possible_movement_pos_pawn.Add(new int[2] { gameCell.X - 1, gameCell.Y - 1 });
+
+                if (gameCell.X + 1 <= 7 && gameCell.Y - 1 >= 0) // Index out of range prevention
+                    if (((GameCell)GameBoard[gameCell.X + 1, gameCell.Y - 1].Tag).IsMyPiece == false)
+                        possible_movement_pos_pawn.Add(new int[2] { gameCell.X + 1, gameCell.Y - 1 });
+
+                if (gameCell.Y - 1 >= 0) // Index out of range prevention
+                    if (((GameCell)GameBoard[gameCell.X, gameCell.Y - 1].Tag).IsMyPiece == false)
+                        possible_movement_pos_pawn.RemoveAll(c => c[0] == gameCell.X && c[1] == gameCell.Y - 1);
+
+                if (gameCell.Y - 2 >= 0) // Index out of range prevention
+                    if (((GameCell)GameBoard[gameCell.X, gameCell.Y - 2].Tag).IsMyPiece == false)
+                        possible_movement_pos_pawn.RemoveAll(c => c[0] == gameCell.X && c[1] == gameCell.Y - 2);
+
+            }
+
+            return possible_movement_pos_pawn;
+        }
+
+        /// <summary>
+        /// Donne tous les movements correspond à : X/Y = 2; Y/X = 1 toutes directions confondues 
+        /// </summary>
+        /// <param name="gameCell"></param>
+        /// <returns></returns>
+        private List<int[]> GetKnightPossibleMovement(GameCell gameCell)
+        {
+            return new List<int[]>
+            {
+                new int[2]{ gameCell.X + 1, gameCell.Y + 2 },
+                new int[2]{ gameCell.X - 1, gameCell.Y + 2 },
+                new int[2]{ gameCell.X - 1, gameCell.Y - 2 },
+                new int[2]{ gameCell.X + 1, gameCell.Y - 2 },
+                new int[2]{ gameCell.X + 2, gameCell.Y - 1 },
+                new int[2]{ gameCell.X + 2, gameCell.Y + 1 },
+                new int[2]{ gameCell.X - 2, gameCell.Y + 1 },
+                new int[2]{ gameCell.X - 2, gameCell.Y - 1 },
+            };
+        }
+
+        /// <summary>
+        /// Donne tous les mouvements directement en contact avec la gameCell, que ça soit vertical, horizontal ou diagonale
+        /// Le king ne peut pas se jeter dans la gueule de l'ennemi cependant.
+        /// </summary>
+        /// <param name="gameCell"></param>
+        /// <returns></returns>
+        private List<int[]> GetKingPossibleMovement(GameCell gameCell)
+        {
+            return new List<int[]>()
+            {
+                CheckIfPosIsSafe(new int[2]{ gameCell.X - 1, gameCell.Y - 1 }),
+                CheckIfPosIsSafe(new int[2]{ gameCell.X + 1, gameCell.Y + 1 }),
+                CheckIfPosIsSafe(new int[2]{ gameCell.X - 1, gameCell.Y + 1 }),
+                CheckIfPosIsSafe(new int[2]{ gameCell.X + 1, gameCell.Y - 1 }),
+                CheckIfPosIsSafe(new int[2]{ gameCell.X, gameCell.Y - 1 }),
+                CheckIfPosIsSafe(new int[2]{ gameCell.X, gameCell.Y + 1 }),
+                CheckIfPosIsSafe(new int[2]{ gameCell.X + 1, gameCell.Y }),
+                CheckIfPosIsSafe(new int[2]{ gameCell.X - 1, gameCell.Y }),
+            };
+        }
+
+        /// <summary>
+        /// Vérifie qu'aucun ennemi ne peut tuer celui qui est dans cette position.
+        /// </summary>
+        /// <param name="pos"></param>
+        /// <returns></returns>
+        private int[] CheckIfPosIsSafe(int[] pos)
+        {
+            try
+            {
+                for (int x = 0; x < 8; x++)
+                {
+                    for (int y = 0; y < 8; y++)
+                    {
+                        if (((GameCell)GameBoard[x, y].Tag).IsMyPiece == false) // pièce ennemi
+                        {
+                            if (((GameCell)GameBoard[x, y].Tag).EnemyPiece != Piece.KING)
+                            {
+                                var posses = GetPieceMovement(((GameCell)GameBoard[x, y].Tag).EnemyPiece, ((GameCell)GameBoard[x, y].Tag));
+                                if (posses.Exists(c => c[0] == pos[0] && c[1] == pos[1]))
+                                    return new int[2] { -1, -1 }; // Le king peut se faire tuer dans cette pos
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message);
+            }
+
+            // Le king ne peut pas se faire tuer dans cette pos
+            return pos;
+        }
+
+        /// <summary>
+        /// Donne tous les mouvements horizontaux et verticaux que la pièce peut effectuer par rapport à gameCell
+        /// </summary>
+        /// <param name="gameCell"></param>
+        private List<int[]> GetRookPossibleMovement(GameCell gameCell)
+        {
+            var possible_movement_pos = new List<int[]>();
+
             // Gauche
             int temp = gameCell.X;
             while (temp - 1 >= 0)
             {
                 temp--;
 
-                possible_movement_pos_rook.Add(new int[2] { temp, gameCell.Y });
+                possible_movement_pos.Add(new int[2] { temp, gameCell.Y });
 
                 if (((GameCell)GameBoard[temp, gameCell.Y].Tag).IsMyPiece != null) break; // On a rencontré une pièce, on ne peut pas la dépasser
             }
@@ -263,7 +352,7 @@ namespace ChessZone
             {
                 temp++;
 
-                possible_movement_pos_rook.Add(new int[2] { temp, gameCell.Y });
+                possible_movement_pos.Add(new int[2] { temp, gameCell.Y });
 
                 if (((GameCell)GameBoard[temp, gameCell.Y].Tag).IsMyPiece != null) break; // On a rencontré une pièce, on ne peut pas la dépasser
             }
@@ -274,7 +363,7 @@ namespace ChessZone
             {
                 temp--;
 
-                possible_movement_pos_rook.Add(new int[2] { gameCell.X, temp });
+                possible_movement_pos.Add(new int[2] { gameCell.X, temp });
 
                 if (((GameCell)GameBoard[gameCell.X, temp].Tag).IsMyPiece != null) break; // On a rencontré une pièce, on ne peut pas la dépasser
             }
@@ -285,19 +374,22 @@ namespace ChessZone
             {
                 temp++;
 
-                possible_movement_pos_rook.Add(new int[2] { gameCell.X, temp });
+                possible_movement_pos.Add(new int[2] { gameCell.X, temp });
 
                 if (((GameCell)GameBoard[gameCell.X, temp].Tag).IsMyPiece != null) break; // On a rencontré une pièce, on ne peut pas la dépasser
             }
+
+            return possible_movement_pos;
         }
 
         /// <summary>
-        /// Ajoute toutes les positions diagonaux que la pièce peut faire par apport à gameCell
+        /// Donne tous les mouvements diagonaux que la pièce peut faire par apport à gameCell
         /// </summary>
         /// <param name="gameCell"></param>
-        /// <param name="possible_movement_pos"></param>
-        private void AddDiagonalMovement(GameCell gameCell, List<int[]> possible_movement_pos)
+        private List<int[]> GetBishopPossibleMovement(GameCell gameCell)
         {
+            var possible_movement_pos = new List<int[]>();
+
             // Haut Gauche
             int temp_bishop_X = gameCell.X;
             int temp_bishop_Y = gameCell.Y;
@@ -349,6 +441,8 @@ namespace ChessZone
 
                 if (((GameCell)GameBoard[temp_bishop_X, temp_bishop_Y].Tag).IsMyPiece != null) break; // On a rencontré une pièce, on ne peut pas la dépasser
             }
+
+            return possible_movement_pos;
         }
 
         /// <summary>
@@ -356,14 +450,36 @@ namespace ChessZone
         /// </summary>
         /// <param name="posFrom">Pos de la pièce à déplacer</param>
         /// <param name="posTo">Pos où déplacer la pièce</param>
-        private void MovePiece(int[] posFrom, int[] posTo)
+        private void MovePiece(int[] posFrom, int[] posTo, bool IsEnemyMovement)
         {
             Border cell_to_move = GameBoard[posFrom[0], posFrom[1]];
             GameCell gameCell_to_move = (GameCell)cell_to_move.Tag;
 
             Border cell_destination = GameBoard[posTo[0], posTo[1]];
             GameCell gameCell_destination = (GameCell)cell_destination.Tag;
-
+            
+            if(gameCell_destination.EnemyPiece == Piece.KING // Si le king ennemie est mort
+                //|| GetKingPossibleMovement((GameCell)
+                //    GameBoard.Cast<Border>().ToList().First(x => ((GameCell)x.Tag).EnemyPiece == Piece.KING).Tag)
+                //    .Count(c => c[0] == -1 && c[1] == -1) == 8
+                ) // Ou que le king ennemi est en échec et mat            
+            {
+                // Win
+                Grid_WinLooseInformer.Visibility = Visibility.Visible;
+                label_winLooseInformation.Content = "Victoire!";
+                label_winLooseInformation.Foreground = Brushes.Green;
+            }
+            else if(gameCell_destination.Piece == Piece.KING // Si on a mangé notre King
+                //|| GetKingPossibleMovement((GameCell)
+                //    GameBoard.Cast<Border>().ToList().First(x => ((GameCell)x.Tag).Piece == Piece.KING).Tag)
+                //    .Count(c => c[0] == -1 && c[1] == -1) == 8
+                ) // Ou que notre king est en échec et mat           
+            {
+                // Lose
+                Grid_WinLooseInformer.Visibility = Visibility.Visible;
+                label_winLooseInformation.Content = "Défaite!";
+                label_winLooseInformation.Foreground = Brushes.Red;
+            }
 
             // Bouge la pièce (pic)                  Image de la pièce à bouger
             ((Image)cell_destination.Child).Source = ((Image)GameBoard[gameCell_to_move.X, gameCell_to_move.Y].Child).Source;
@@ -373,8 +489,9 @@ namespace ChessZone
             // Change le curseur de la case déplacé
             GameBoard[gameCell_to_move.X, gameCell_to_move.Y].Cursor = Cursors.Arrow;
 
-            // Type                      Piece à bouger
-            gameCell_destination.Piece = ((GameCell)GameBoard[gameCell_to_move.X, gameCell_to_move.Y].Tag).Piece;
+            // Type                           Piece à bouger
+            gameCell_destination.Piece =      ((GameCell)GameBoard[gameCell_to_move.X, gameCell_to_move.Y].Tag).Piece;
+            gameCell_destination.EnemyPiece = ((GameCell)GameBoard[gameCell_to_move.X, gameCell_to_move.Y].Tag).EnemyPiece;
             // Personne à qui appartient la pièce
             gameCell_destination.IsMyPiece = ((GameCell)GameBoard[gameCell_to_move.X, gameCell_to_move.Y].Tag).IsMyPiece;
 
@@ -383,6 +500,24 @@ namespace ChessZone
             ((GameCell)GameBoard[gameCell_to_move.X, gameCell_to_move.Y].Tag).Piece = Piece.VOID;
             gameCell_destination.ToMoveX = -1;
             gameCell_destination.ToMoveY = -1;
+
+            // Regarde si il y a échec (= une pièce menace le King)
+            if (IsEnemyMovement)
+            {
+                var destination_piece_movement = GetPieceMovement(gameCell_destination.EnemyPiece, gameCell_destination);
+                foreach (var pos in destination_piece_movement)
+                {
+                    if (pos[0] <= 7 && pos[0] >= 0 && pos[1] <= 7 && pos[1] >= 0)
+                        if (((GameCell)GameBoard[pos[0], pos[1]].Tag).IsMyPiece == true
+                            && ((GameCell)GameBoard[pos[0], pos[1]].Tag).Piece == Piece.KING)
+                        {
+                            // Le king est menacé.
+                            IsMyKingBeingThreaten = true;
+                            GameBoard[pos[0], pos[1]].BorderBrush = Brushes.DarkOrange;
+                            GameBoard[pos[0], pos[1]].BorderThickness = new Thickness(5);
+                        }
+                }
+            }
         }
 
         /// <summary>
@@ -398,29 +533,6 @@ namespace ChessZone
             if (DoShowPieceMovePreview) // Ceci concerne si on appuie 2x sur une même pièce, la première fois
                                         // on affiche sa trajectoire, la deuxième fois on veut la cacher.
             {
-                // La pièce PAWN est spécial :
-                // Si l'on a un ennemi en y -1 x1-(-1) alors on peut le tuer, sinon on ne peut pas y aller
-                // Par contre elle ne peut tuer l'ennemi se trouvant devant
-                if(cell.Piece == Piece.PAWN)
-                {
-                    if(cell.X - 1 >= 0 && cell.Y - 1 >= 0) // Index out of range prevention
-                        if(((GameCell)GameBoard[cell.X - 1, cell.Y - 1].Tag).IsMyPiece == false)                   
-                            poss.Add(new int[2] { cell.X - 1, cell.Y - 1 });
-
-                    if (cell.X + 1 <= 7 && cell.Y - 1 >= 0) // Index out of range prevention
-                        if (((GameCell)GameBoard[cell.X + 1, cell.Y - 1].Tag).IsMyPiece == false)                  
-                            poss.Add(new int[2] { cell.X + 1, cell.Y - 1 });
-
-                    if (cell.Y - 1 >= 0) // Index out of range prevention
-                        if (((GameCell)GameBoard[cell.X, cell.Y - 1].Tag).IsMyPiece == false)                    
-                            poss.RemoveAll(c => c[0] == cell.X && c[1] == cell.Y - 1);
-                    
-                    if (cell.Y - 2 >= 0) // Index out of range prevention
-                        if (((GameCell)GameBoard[cell.X, cell.Y - 2].Tag).IsMyPiece == false)                    
-                            poss.RemoveAll(c => c[0] == cell.X && c[1] == cell.Y - 2);
-                    
-                }
-
                 foreach (int[] pos in poss)
                 {
                     //  Si la pos est :
@@ -502,6 +614,15 @@ namespace ChessZone
                         GameBoard[x, y].BorderBrush = Brushes.Black;
                         GameBoard[x, y].BorderThickness = new Thickness(2);
                     }
+
+                    // Si cell = null cela veut dire que l'on enlève les propositions car une celle a été bougé.
+                    // Si notre king est menacé alors cela veut dire qu'il ne l'est plus
+                    // On enlève donc l'indicateur de menace sur cette case
+                    if(cell == null && GameBoard[x, y].BorderBrush == Brushes.DarkOrange)
+                    {
+                        GameBoard[x, y].BorderBrush = Brushes.Black;
+                        GameBoard[x, y].BorderThickness = new Thickness(2);
+                    }
                 }
             }
 
@@ -518,12 +639,16 @@ namespace ChessZone
             // Server
             try
             {
+                this.DataContext = new AnimationExtension();
+
                 ZoneckClient = new ZoneckClient("Chess", "127.0.0.1", 30_000, MessageRecieved);
                 while (ZoneckClient.MyId == null)
                 {
                     await Task.Delay(250);
                     //Label_SearchPlayer.Content = ZoneckClient.MyId;
                 }
+
+                ((AnimationExtension)this.DataContext).SearchForPlayerAnimatedText = "Recherche d'un joueur.  ";
 
                 // Recherche un adversaire
                 // Délai sinon des fois il ne trouve pas d'adversaire
@@ -534,9 +659,6 @@ namespace ChessZone
             {
                 MessageBox.Show("Aucun serveur trouvé.");
             }
-
-            // Animation
-            this.DataContext = new AnimationExtension();
 
             // Essaie de trouver un joueur
             //    Le reste se passe dans MessageRecieved
@@ -605,7 +727,7 @@ namespace ChessZone
                                     {
                                         // Les coordonnées sont encore les pièces des blancs. Il faut donc changer
                                         // pour que ça soit la pièce équivalente noir qui bouche à la place
-                                        MovePiece(PiecePosFromBlackPlayerViewConverter(mi.FromPos), PiecePosFromBlackPlayerViewConverter(mi.ToPos));
+                                        MovePiece(PiecePosFromBlackPlayerViewConverter(mi.FromPos), PiecePosFromBlackPlayerViewConverter(mi.ToPos), true);
 
                                         IsMyTurn = true;
                                         MyTurnIndicator();
@@ -642,8 +764,8 @@ namespace ChessZone
         private void StartGame()
         {
             // Place les pions, les deux clients ont les pions blancs
-            PlacePiecesFromColorAtRow('w', 7, 6);
-            PlacePiecesFromColorAtRow('b', 0, 1);
+            PlacePiecesFromColorAtRow(PlayerColor, 7, 6);
+            PlacePiecesFromColorAtRow(PlayerColor == 'w' ? 'b' : 'w', 0, 1);
 
             // Le joueur qui commence est celui qui a lancé la demande de partie
             MyTurnIndicator();
@@ -676,17 +798,19 @@ namespace ChessZone
             // Place tous les pawns
             for (int i = 0; i < 8; i++)
             {
-                if (color == 'w')
+                if (color == PlayerColor)
                 {
                     GameBoard[i, line_pawn].Cursor = Cursors.Hand; // 6 = la ligne avec tous les pawns
                     GameBoard[i, 7].Cursor = Cursors.Hand; // 7 = la dernière ligne avec toutes les autres pièces
                 }
 
                 (GameBoard[i, line_pawn].Child as Image)!.Source = GetImageSourceFromResource(color + "p");
-                if (color == 'w')
+                if (color == PlayerColor)
                     ((GameCell)GameBoard[i, line_pawn].Tag).Piece = Piece.PAWN;
+                else
+                    ((GameCell)GameBoard[i, line_pawn].Tag).EnemyPiece = Piece.PAWN;
 
-                // Void row
+                // Void row (les 4 du centre)
                 GameBoard[i, 5].Cursor = Cursors.Arrow;
                 GameBoard[i, 4].Cursor = Cursors.Arrow;
                 GameBoard[i, 3].Cursor = Cursors.Arrow;
@@ -706,8 +830,8 @@ namespace ChessZone
             (GameBoard[6, line_other].Child as Image)!.Source = GetImageSourceFromResource(color + "n");
 
             // Fou "b"
-            (GameBoard[2, line_other].Child as Image)!.Source = GetImageSourceFromResource(color + "n");
-            (GameBoard[5, line_other].Child as Image)!.Source = GetImageSourceFromResource(color + "n");
+            (GameBoard[2, line_other].Child as Image)!.Source = GetImageSourceFromResource(color + "b");
+            (GameBoard[5, line_other].Child as Image)!.Source = GetImageSourceFromResource(color + "b");
 
             // Dame "q"
             (GameBoard[3, line_other].Child as Image)!.Source = GetImageSourceFromResource(color + "q");
@@ -716,7 +840,7 @@ namespace ChessZone
             (GameBoard[4, line_other].Child as Image)!.Source = GetImageSourceFromResource(color + "k");
 
             // Set uniquement nos pièces, les pièces ennemis sont en Piece.VOID
-            if (color == 'w')
+            if (color == PlayerColor)
             {
                 ((GameCell)GameBoard[0, line_other].Tag).Piece = Piece.ROOK;
                 ((GameCell)GameBoard[7, line_other].Tag).Piece = Piece.ROOK;
@@ -726,6 +850,17 @@ namespace ChessZone
                 ((GameCell)GameBoard[5, line_other].Tag).Piece = Piece.BISHOP;
                 ((GameCell)GameBoard[3, line_other].Tag).Piece = Piece.QUEEN;
                 ((GameCell)GameBoard[4, line_other].Tag).Piece = Piece.KING;
+            }
+            else
+            {
+                ((GameCell)GameBoard[0, line_other].Tag).EnemyPiece = Piece.ROOK;
+                ((GameCell)GameBoard[7, line_other].Tag).EnemyPiece = Piece.ROOK;
+                ((GameCell)GameBoard[1, line_other].Tag).EnemyPiece = Piece.KNIGHT;
+                ((GameCell)GameBoard[6, line_other].Tag).EnemyPiece = Piece.KNIGHT;
+                ((GameCell)GameBoard[2, line_other].Tag).EnemyPiece = Piece.BISHOP;
+                ((GameCell)GameBoard[5, line_other].Tag).EnemyPiece = Piece.BISHOP;
+                ((GameCell)GameBoard[3, line_other].Tag).EnemyPiece = Piece.QUEEN;
+                ((GameCell)GameBoard[4, line_other].Tag).EnemyPiece = Piece.KING;
             }
         }
 
@@ -742,13 +877,9 @@ namespace ChessZone
         {
             return JsonConvert.SerializeObject(chessMessage);
         }
-        private ChessMessage FromJsonMessage(string chessMessage)
+        private ChessMessage FromJsonMessage(string jsonChessMessage)
         {
-            return JsonConvert.DeserializeObject<ChessMessage>(chessMessage)!;
-        }
-
-        private void Label_SearchPlayer_MouseDown(object sender, MouseButtonEventArgs e)
-        {
+            return JsonConvert.DeserializeObject<ChessMessage>(jsonChessMessage)!;
         }
     }
 }

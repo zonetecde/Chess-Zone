@@ -5,14 +5,20 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ChessZone"
         mc:Ignorable="d"
-        Title="Chess Zone" MinHeight="450" MinWidth="450" WindowState="Minimized" WindowStartupLocation="CenterScreen" Background="#FF202020" ContentRendered="Window_ContentRendered">
+        Title="Chess Zone" MinHeight="450" MinWidth="450"  WindowStartupLocation="CenterScreen" Background="#FF202020" ContentRendered="Window_ContentRendered">
     <Grid>
         <Border x:Name="Border_GameBoard" BorderThickness="2" BorderBrush="Black"  HorizontalAlignment="Center" VerticalAlignment="Center">
-            <UniformGrid x:Name="uniformGrid_gameBoard" Background="#FF66443A" Columns="8" Rows="8"/>
+            <Grid>
+                <UniformGrid x:Name="uniformGrid_gameBoard" Background="#FF66443A" Columns="8" Rows="8"/>
+
+                <Grid x:Name="Grid_WinLooseInformer" Visibility="Hidden" Background="#B2000000">
+                    <Label x:Name="label_winLooseInformation" Foreground="White" FontSize="30" FontFamily="Consolas" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                </Grid>
+            </Grid>
         </Border>
 
-        <Label x:Name="Label_SearchPlayer" Background="#CC000000" FontFamily="Consolas" FontSize="40" Content="{Binding SearchForPlayerAnimatedText}" 
-               Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" MouseDown="Label_SearchPlayer_MouseDown"
+        <Label x:Name="Label_SearchPlayer" Background="#CC000000" FontFamily="Consolas" FontSize="32" Content="{Binding SearchForPlayerAnimatedText}" 
+               Foreground="White" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                Visibility="Visible"/>
     </Grid>
 </Window>
